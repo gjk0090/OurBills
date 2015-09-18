@@ -1,0 +1,31 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.fff.gjk.ourbills.activity.MainActivity" >
+    
+    <item android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
+    <item android:id="@+id/add_bill"
+        android:title="+$"
+        android:orderInCategory="97"
+        android:showAsAction="always" />
+    <item android:id="@+id/add_friend"
+        android:icon="@drawable/ic_social_add_person"
+        android:title="+"
+        android:orderInCategory="98"
+        android:showAsAction="always" />
+    <item android:id="@+id/add_group"
+        android:icon="@drawable/ic_social_add_group"
+        android:title="++"
+        android:orderInCategory="99"
+        android:showAsAction="always" />
+    <item android:id="@+id/add_DB"
+        android:title="add DB"
+        android:orderInCategory="101"
+        android:showAsAction="never" />
+    <item android:id="@+id/clear_DB"
+        android:title="clean DB"
+        android:orderInCategory="102"
+        android:showAsAction="never" />
+</menu>
