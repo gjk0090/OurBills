@@ -1,6 +1,8 @@
 package com.fff.gjk.ourbills.activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -15,6 +17,8 @@ import android.widget.Toast;
 
 import com.fff.gjk.ourbills.R;
 import com.fff.gjk.ourbills.bean.Friend;
+import com.fff.gjk.ourbills.util.Constants;
+import com.fff.gjk.ourbills.util.TestDBHelper;
 
 public class EditFriendActivity extends Activity {
 
@@ -25,7 +29,7 @@ public class EditFriendActivity extends Activity {
     private EditText editName, editEmail;
     private RadioGroup radioGender;
     private RadioButton radioMale, radioFemale;
-    private Button resetFriend, editFriend;
+    private Button resetFriend, editFriend, removeFriend;
 
     private String gender = "male";
 
@@ -62,12 +66,22 @@ public class EditFriendActivity extends Activity {
 
         editFriend=(Button) findViewById(R.id.edit_friend);
         resetFriend=(Button) findViewById(R.id.reset_friend);
+        removeFriend=(Button) findViewById(R.id.remove_friend);
 
         editFriend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 String name = editName.getText().toString();
+                if(name == null || name.isEmpty()){
+                    Toast.makeText(getApplicationContext(), "Please enter friend name.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(!oriFriend.fname.equals(name) && MainActivity.mgr.getFidByFname(name)!=-1){
+                    Toast.makeText(getApplicationContext(),"Friend name already exist!",Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 String email = editEmail.getText().toString();
 
                 Friend newFriend = new Friend(name, gender, email);
@@ -82,7 +96,7 @@ public class EditFriendActivity extends Activity {
                 if(tempId==-1||tempId==fid){
 
                     MainActivity.mgr.editFriend(newFriend);
-                    Toast.makeText(EditFriendActivity.this, "Edit friend success!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Edit friend "+name+" success!", Toast.LENGTH_SHORT).show();
 
                     Intent i = new Intent();
                     EditFriendActivity.this.setResult(RESULT_OK, i);
@@ -106,6 +120,35 @@ public class EditFriendActivity extends Activity {
                     gender="female";
                     radioFemale.setChecked(true);
                 }
+            }
+        });
+
+        removeFriend.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                //check if settled up
+                double sum = MainActivity.mgr.getTotalBalanceByFid(fid);
+                if (sum > Constants.settledThreshold || sum < -Constants.settledThreshold){
+                    Toast.makeText(getApplicationContext(), "Friend not settle up, can not delete friend.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                //confirming dialog
+                new AlertDialog.Builder(EditFriendActivity.this).setTitle("Danger!")
+                        .setMessage("Are you sure you want to delete this friend?")
+                        .setIcon(R.drawable.ic_launcher)
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                Toast.makeText(EditFriendActivity.this, "Function not implemented yet :)", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+
+                            }
+                        }).show();
             }
         });
 

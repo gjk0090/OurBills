@@ -44,9 +44,9 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
      */
     private static final String STATE_SELECTED_NAVIGATION_ITEM = "selected_navigation_item";
 
-    public int groupId = -1;
+    public int fromGroupId = -1;
 
-    AddbillSimple addbillSimple;
+    private AddbillSimple addbillSimple;
 
     final Calendar c = Calendar.getInstance();
     public int mYear = c.get(Calendar.YEAR);
@@ -54,7 +54,7 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
     public int mDay = c.get(Calendar.DAY_OF_MONTH);
 
     public static List<Group> groups;
-    List<String> groupList = new ArrayList<String>();
+    private List<String> groupList = new ArrayList<String>();
 
     public static List<String> bcategory;
 
@@ -86,7 +86,7 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
                 this);
 
         Bundle b = this.getIntent().getExtras();
-        groupId = (Integer) b.get("groupId");
+        fromGroupId = (Integer) b.get("fromGroupId");
 
         addbillSimple = new AddbillSimple();
 
@@ -132,8 +132,8 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
         if (id == android.R.id.home) {
             //Intent i = NavUtils.getParentActivityIntent(this);
             //HashMap<String, Object> groupMap = new HashMap<String, Object>();
-            //groupMap.put("gid",groupId);
-            //groupMap.put("gname",MainActivity.mgr.getGroupById(groupId).gname);
+            //groupMap.put("gid",fromGroupId);
+            //groupMap.put("gname",MainActivity.mgr.getGroupById(fromGroupId).gname);
             //i.putExtra("groupMap",groupMap);
             //NavUtils.navigateUpTo(this, i);
             finish();
@@ -244,33 +244,45 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
 
 
 
-    public class AddbillSimple extends Fragment {
+    public static class AddbillSimple extends Fragment {
 
+        private AddBillActivity mActivity;
 
-        public int splitCount = 0;
-        List<String> friendList = new ArrayList<String>();
+        private  int splitCount = 0;
+        private List<String> friendList = new ArrayList<String>();
 
-        EditText title_edit;
-        EditText amount_edit;
+        private EditText title_edit;
+        private EditText amount_edit;
 
-        EditText date_edit;
-        Button choose_date;
+        private EditText date_edit;
+        private Button choose_date;
 
-        Spinner groupSpinner;
-        Spinner paySpinner;
-        Spinner categorySpinner;
+        private Spinner groupSpinner;
+        private Spinner paySpinner;
+        private Spinner categorySpinner;
 
-        ArrayAdapter<String> groupAdapter;
-        ArrayAdapter<String> categoryAdapter;
-        ArrayAdapter<String> payAdapter;
+        private ArrayAdapter<String> groupAdapter;
+        private ArrayAdapter<String> categoryAdapter;
+        private ArrayAdapter<String> payAdapter;
 
-        ListView splitList;
-        LinearLayout linearLayout;
+        private ListView splitList;
+        private LinearLayout linearLayout;
         private List<CheckBox> checkBoxs = new ArrayList<CheckBox>();
 
-        Button submit;
+        private Button submit;
 
         public AddbillSimple() {
+        }
+
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof AddBillActivity)
+            {
+                mActivity = (AddBillActivity) activity;
+            }
+            super.onAttach(activity);
         }
 
         @Override
@@ -280,7 +292,7 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
             View view = inflater.inflate(R.layout.fragment_add_bill_simple, container, false);
 
 
-            friendList = getFriendList(groupId);
+            friendList = mActivity.getFriendList(mActivity.fromGroupId);
 
             //spinner
 
@@ -293,7 +305,7 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
             //第一步：添加一个下拉列表项的list，这里添加的项就是下拉列表的菜单项
 
             //第二步：为下拉列表定义一个适配器，这里就用到里前面定义的list。
-            groupAdapter = new ArrayAdapter<String>(view.getContext(),android.R.layout.simple_spinner_item, groupList);
+            groupAdapter = new ArrayAdapter<String>(view.getContext(),android.R.layout.simple_spinner_item, mActivity.groupList);
             categoryAdapter = new ArrayAdapter<String>(view.getContext(),android.R.layout.simple_spinner_item, bcategory);
             payAdapter = new ArrayAdapter<String>(view.getContext(),android.R.layout.simple_spinner_item, friendList);
 
@@ -308,15 +320,15 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
             categorySpinner.setAdapter(categoryAdapter);
 
             //set default
-            groupSpinner.setSelection(groupId-1);
+            groupSpinner.setSelection(mActivity.fromGroupId -1);
 
             //第五步：为下拉列表设置各种事件的响应，这个事响应菜单被选中
             groupSpinner.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
 
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    groupId = groups.get(position).gid;
-                    friendList = getFriendList(groupId);
+                    mActivity.fromGroupId = groups.get(position).gid;
+                    friendList = mActivity.getFriendList(mActivity.fromGroupId);
 
                     payAdapter = new ArrayAdapter<String>(view.getContext(),android.R.layout.simple_spinner_item, friendList);
                     payAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -325,7 +337,7 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
                     linearLayout.removeAllViews();
                     checkBoxs = new ArrayList<CheckBox>();
                     for(int i = 0; i < friendList.size(); i++) {
-                        CheckBox checkBoxLayout = (CheckBox)getLayoutInflater().inflate(R.layout.list_item_checkbox, null);
+                        CheckBox checkBoxLayout = (CheckBox) mActivity.getLayoutInflater().inflate(R.layout.list_item_checkbox, null);
                         checkBoxs.add(checkBoxLayout);
                         checkBoxs.get(i).setText(friendList.get(i));
 
@@ -346,22 +358,22 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
 
             //date
             date_edit = (EditText) view.findViewById(R.id.date_edit);
-            date_edit.setText(buildDateString());
+            date_edit.setText(mActivity.buildDateString());
             choose_date = (Button) view.findViewById(R.id.choose_date);
 
             final DatePickerDialog.OnDateSetListener mDateSetListener = new DatePickerDialog.OnDateSetListener() {
                 public void onDateSet(DatePicker view, int year, int monthOfYear,int dayOfMonth) {
-                    mYear = year;
-                    mMonth = monthOfYear;
-                    mDay = dayOfMonth;
-                    date_edit.setText(buildDateString());
+                    mActivity.mYear = year;
+                    mActivity.mMonth = monthOfYear;
+                    mActivity.mDay = dayOfMonth;
+                    date_edit.setText(mActivity.buildDateString());
                 }
             };
 
             choose_date.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    new DatePickerDialog(getActivity(), mDateSetListener, mYear, mMonth, mDay).show();
+                    new DatePickerDialog(getActivity(), mDateSetListener, mActivity.mYear, mActivity.mMonth, mActivity.mDay).show();
                 }
             });
 
@@ -395,7 +407,7 @@ public class AddBillActivity extends Activity implements ActionBar.OnNavigationL
                             }
                         }
 
-                        addBill(bill,pay,owe);
+                        mActivity.addBill(bill,pay,owe);
 
                         Toast.makeText(getActivity(),"Bill added !",Toast.LENGTH_SHORT).show();
 

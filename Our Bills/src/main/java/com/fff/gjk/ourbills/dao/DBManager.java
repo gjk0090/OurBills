@@ -1,6 +1,7 @@
 package com.fff.gjk.ourbills.dao;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import android.content.ContentValues;
@@ -51,14 +52,21 @@ public class DBManager {
         }
     }
 
-    public void addGroup(Group group) {
+    public int addGroup(Group group) {
         db.beginTransaction();  //开始事务
+        int gid = -1;
         try {
             db.execSQL("INSERT INTO groups VALUES(null, ?, ?, ?)", new Object[]{group.gname, group.gcid, "null"});
+
             db.setTransactionSuccessful();  //设置事务成功完成
         } finally {
             db.endTransaction();    //结束事务
         }
+        Cursor c = db.rawQuery("SELECT gid FROM groups WHERE gname = '" + group.gname + "'", null);
+        c.moveToNext();
+        gid = c.getInt(c.getColumnIndex("gid"));
+        c.close();
+        return gid;
     }
 
     public void addFriend(Friend friend) {
@@ -442,6 +450,17 @@ public class DBManager {
 
     }
 
+    public int editGroup(Group g){
+
+        ContentValues cv = new ContentValues();
+
+        cv.put("gname", g.gname);
+        cv.put("gcid", g.gcid);
+
+        String where = "gid="+g.gid;
+
+        return db.update("groups", cv, where, null);
+    }
 
 
 
@@ -450,6 +469,19 @@ public class DBManager {
 
 
 
+    //DELETE
+    public int deleteAllFriendInGroup(int gid, Collection<Integer> fids){
+        db.beginTransaction();  //开始事务
+
+        for(int fid : fids) {
+
+            int i = db.delete("friend_group", "gid = ? AND fid = ?", new String[]{String.valueOf(gid), String.valueOf(fid)});
+        }
+        db.setTransactionSuccessful();  //设置事务成功完成
+        db.endTransaction();    //结束事务
+
+        return 0;
+    }
 
 
 

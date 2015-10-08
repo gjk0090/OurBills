@@ -2,15 +2,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.fff.gjk.ourbills.activity.GroupActivity" >
     
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
-        android:orderInCategory="100"
-        android:showAsAction="never" />
+    <!--<item android:id="@+id/action_settings"-->
+        <!--android:title="@string/action_settings"-->
+        <!--android:orderInCategory="100"-->
+        <!--android:showAsAction="never" />-->
     <item android:id="@+id/add_bill"
         android:title="+$"
         android:orderInCategory="98"
         android:showAsAction="ifRoom" />
     <item android:id="@+id/edit_group"
+        android:icon="@drawable/ic_edit"
         android:title="edit"
         android:orderInCategory="99"
         android:showAsAction="ifRoom" />

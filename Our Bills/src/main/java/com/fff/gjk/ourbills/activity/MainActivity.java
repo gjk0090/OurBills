@@ -30,6 +30,8 @@ import com.fff.gjk.ourbills.bean.Friend_Group;
 import com.fff.gjk.ourbills.bean.Group;
 import com.fff.gjk.ourbills.dao.DBManager;
 import com.fff.gjk.ourbills.R;
+import com.fff.gjk.ourbills.util.Constants;
+import com.fff.gjk.ourbills.util.TestDBHelper;
 
 public class MainActivity extends Activity implements ActionBar.TabListener {
 
@@ -53,114 +55,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     private MainFriendsFragment mainFriendsFragment;
     java.text.DecimalFormat df = new java.text.DecimalFormat("#0.00");
 
-    public void addDB() {
-        Toast.makeText(this, "added!", Toast.LENGTH_SHORT).show();
-
-        mgr.addGroup(new Group("Miami Trip", 1));
-        mgr.addGroup(new Group("PR Trip", 2));
-        mgr.addGroup(new Group("Yellowstone Trip", 3));
-        mgr.addGroup(new Group("heaven trip", 4));
-        mgr.addGroup(new Group("hell trip", 1));
-
-        mgr.addFriend(new Friend("gjk","male","gjk0090@126"));
-        mgr.addFriend(new Friend("小红","female","gjk0090@163"));
-        mgr.addFriend(new Friend("小明","male","gjk0090@qq"));
-        mgr.addFriend(new Friend("小美","female","gjk0090@gmail"));
-        mgr.addFriend(new Friend("小刚","male","gjk0090@pitt"));
-
-        mgr.addFriendToGroup(1,1);
-        mgr.addFriendToGroup(2,1);
-        mgr.addFriendToGroup(3,1);
-        mgr.addFriendToGroup(4,1);
-        mgr.addFriendToGroup(5,1);
-
-        mgr.addFriendToGroup(2,2);
-        mgr.addFriendToGroup(3,2);
-        mgr.addFriendToGroup(4,2);
-        mgr.addFriendToGroup(3,3);
-        mgr.addFriendToGroup(4,3);
-        mgr.addFriendToGroup(4,4);
-        mgr.addFriendToGroup(5,4);
-        mgr.addFriendToGroup(5,5);
-        mgr.addFriendToGroup(1,5);
-
-        HashMap<Integer, Double> pay = new HashMap<Integer, Double>();
-        pay.put(1,60.3);
-        HashMap<Integer, Double> owe = new HashMap<Integer, Double>();
-        owe.put(1,20.1);
-        owe.put(2,20.1);
-        owe.put(3,20.1);
-        addBill(new Bill(1, "breakfast", 60.3, 1, 1, "2014/03/07"), pay, owe);
-
-        pay = new HashMap<Integer, Double>();
-        pay.put(2,30.3);
-        owe = new HashMap<Integer, Double>();
-        owe.put(1,10.1);
-        owe.put(2,10.1);
-        owe.put(3,10.1);
-        addBill(new Bill(1, "lunch", 30.3, 1, 2, "2014/03/07"), pay, owe);
-
-        pay = new HashMap<Integer, Double>();
-        pay.put(3,20.3);
-        owe = new HashMap<Integer, Double>();
-        owe.put(1,10.2);
-        owe.put(2,10.1);
-        addBill(new Bill(1, "dinner", 20.3, 1, 3, "2014/03/07"), pay, owe);
-
-        pay = new HashMap<Integer, Double>();
-        pay.put(2,360.3);
-        owe = new HashMap<Integer, Double>();
-        owe.put(1,120.1);
-        owe.put(2,120.1);
-        owe.put(3,120.1);
-        addBill(new Bill(1, "flight", 360.3, 1, 4, "2014/03/07"), pay, owe);
-
-    }
-
-    public void addBill(Bill bill, HashMap<Integer, Double> pay, HashMap<Integer, Double> owe){
-
-        mgr.addBill(bill);
-
-        int bid = mgr.getLastBillId();
-
-        ArrayList<Friend_Group> fgs = new ArrayList<Friend_Group>();
-
-        Set paySet = pay.entrySet();
-        for(Iterator iter = paySet.iterator(); iter.hasNext();)
-        {
-            Map.Entry entry = (Map.Entry)iter.next();
-
-            int fid = Integer.parseInt((String)entry.getKey().toString());
-            double payAmount = Double.valueOf((String) entry.getValue().toString());
-
-            mgr.addFriendToBill(fid,bid,payAmount,0);
-
-            Friend_Group fg = new Friend_Group(fid,bill.gid,payAmount);
-            fgs.add(fg);
-        }
-
-        Set oweSet = owe.entrySet();
-        for(Iterator iter = oweSet.iterator(); iter.hasNext();)
-        {
-            Map.Entry entry = (Map.Entry)iter.next();
-
-            int fid = Integer.parseInt((String)entry.getKey().toString());
-            double oweAmount = Double.valueOf((String)entry.getValue().toString());
-
-            mgr.addFriendToBill(fid,bid,0,oweAmount);
-
-            Friend_Group fg = new Friend_Group(fid,bill.gid,0-oweAmount);
-            fgs.add(fg);
-        }
-
-        for(Friend_Group fg : fgs){
-            mgr.updateBalance(fg);
-        }
-    }
-
-    public void cleanDB(){
-        mgr.cleanDB();
-    }
 
 
     @Override
@@ -234,10 +128,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         if (id == R.id.add_bill) {
             if(mgr.getAllGroups().size()!=0) {
                 Intent i = new Intent(MainActivity.this, AddBillActivity.class);
-                i.putExtra("groupId", 1);
+                i.putExtra("fromGroupId", 1);
                 startActivityForResult(i, 0);
             }else{
-                Toast.makeText(this,"Please add a group first!",Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,"Please add a group with friends first!",Toast.LENGTH_SHORT).show();
             }
             return true;
         }
@@ -248,8 +142,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         }
 
         if (id == R.id.add_group) {
-            Intent i = new Intent(MainActivity.this, AddGroupActivity.class);
-            startActivityForResult(i, 0);
+            if(mgr.getAllFriends().size() != 0) {
+                Intent i = new Intent(MainActivity.this, AddGroupActivity.class);
+                startActivityForResult(i, 0);
+            }else{
+                Toast.makeText(this,"Please add at least one friend first!",Toast.LENGTH_SHORT).show();
+            }
         }
 
 
@@ -260,22 +158,24 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
             return true;
         }
 
-        if (id == R.id.add_DB) {
-            addDB();
-
-            //update fragment
-            mSectionsPagerAdapter.notifyDataSetChanged();
-            return true;
-        }
+//        if (id == R.id.add_DB) {
+//            TestDBHelper.addDB();
+//            Toast.makeText(this, "added!", Toast.LENGTH_SHORT).show();
+//
+//
+//            //update fragment
+//            mSectionsPagerAdapter.notifyDataSetChanged();
+//            return true;
+//        }
         if (id == R.id.clear_DB) {
-            new AlertDialog.Builder(this).setTitle("想清楚！！！！！！")
-                    .setMessage("你真的要清除数据库？？？？？？")
+            new AlertDialog.Builder(this).setTitle("Danger!")
+                    .setMessage("Do you want to clear all data？")
                     .setIcon(R.drawable.ic_launcher)
-                    .setPositiveButton("真的", new DialogInterface.OnClickListener() {
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 
                         public void onClick(DialogInterface dialog, int whichButton) {
                             setResult(RESULT_OK);//确定按钮事件
-                            cleanDB();
+                            TestDBHelper.cleanDB();
 
                             //update fragment
                             //mSectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
@@ -283,7 +183,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
                             mSectionsPagerAdapter.notifyDataSetChanged();
                         }
                     })
-                    .setNegativeButton("不要啊", new DialogInterface.OnClickListener() {
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int whichButton) {
                             //取消按钮事件
                         }
@@ -424,17 +324,28 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
 
 
-    public class MainGroupsFragment extends Fragment {
+    public static class MainGroupsFragment extends Fragment {
 
-        ListView listView;
+        private MainActivity mActivity;
+        private ListView listView;
 
         public MainGroupsFragment() {
         }
 
         @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof MainActivity)
+            {
+                mActivity = (MainActivity) activity;
+            }
+            super.onAttach(activity);
+        }
+
+        @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
 
-            Toast.makeText(getActivity(),"group fragment onCreateView",Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(),"group fragment onCreateView",Toast.LENGTH_SHORT).show();
 
             View view = inflater.inflate(R.layout.fragment_main_groups, container, false);
             listView = (ListView) view.findViewById(R.id.listView_groups);
@@ -448,7 +359,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
                     HashMap<String, Object> groupMap = (HashMap<String, Object>) parent.getItemAtPosition(position);
 
-                    Intent i = new Intent(MainActivity.this, GroupActivity.class);
+                    Intent i = new Intent(mActivity, GroupActivity.class);
                     i.putExtra("groupMap", groupMap);
                     getActivity().startActivityForResult(i, 0);
 
@@ -471,12 +382,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
                 String status = "";
                 List<Friend_Group> fgs = mgr.getFriend_GroupByGroupId(group.gid);
                 for (Friend_Group fg : fgs){
-                    if(fg.balance>0.001){debt += fg.balance;}
+                    if(fg.balance>Constants.settledThreshold){debt += fg.balance;}
                 }
-                if (debt<0.001&&debt>-0.001){
+                if (debt<Constants.settledThreshold&&debt>-Constants.settledThreshold){
                     status = "Settled Up";
                 }else{
-                    status = "Debt $ "+df.format(debt);
+                    status = "Debt $ " + mActivity.df.format(debt);
                 }
 
                 HashMap<String, Object> map = new HashMap<String, Object>();
@@ -495,65 +406,65 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         }
 
 
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            Toast.makeText(getActivity(),"group fragment onAttach",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            Toast.makeText(getActivity(),"group fragment onCreate",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onActivityCreated(Bundle savedInstanceState) {
-            super.onActivityCreated(savedInstanceState);
-            Toast.makeText(getActivity(),"group fragment onActivityCreated",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onStart() {
-            super.onStart();
-            Toast.makeText(getActivity(),"group fragment onStart",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onResume() {
-            super.onResume();
-            Toast.makeText(getActivity(),"group fragment onResume",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onPause() {
-            super.onPause();
-            Toast.makeText(getActivity(),"group fragment onPause",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onStop() {
-            super.onStop();
-            Toast.makeText(getActivity(),"group fragment onStop",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onDestroyView() {
-            super.onDestroyView();
-            Toast.makeText(getActivity(),"group fragment onDestroyView",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onDestroy() {
-            super.onDestroy();
-            Toast.makeText(getActivity(),"group fragment onDestroy",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onDetach() {
-            super.onDetach();
-            Toast.makeText(getActivity(),"group fragment onDetach",Toast.LENGTH_SHORT).show();
-        }
+//        @Override
+//        public void onAttach(Activity activity) {
+//            super.onAttach(activity);
+//            Toast.makeText(getActivity(),"group fragment onAttach",Toast.LENGTH_SHORT).show();
+//        }
+//
+//        @Override
+//        public void onCreate(Bundle savedInstanceState) {
+//            super.onCreate(savedInstanceState);
+//            Toast.makeText(getActivity(),"group fragment onCreate",Toast.LENGTH_SHORT).show();
+//        }
+//
+//        @Override
+//        public void onActivityCreated(Bundle savedInstanceState) {
+//            super.onActivityCreated(savedInstanceState);
+//            Toast.makeText(getActivity(),"group fragment onActivityCreated",Toast.LENGTH_SHORT).show();
+//        }
+//
+//        @Override
+//        public void onStart() {
+//            super.onStart();
+//            Toast.makeText(getActivity(),"group fragment onStart",Toast.LENGTH_SHORT).show();
+//        }
+//
+//        @Override
+//        public void onResume() {
+//            super.onResume();
+//            Toast.makeText(getActivity(),"group fragment onResume",Toast.LENGTH_SHORT).show();
+//        }
+//
+//        @Override
+//        public void onPause() {
+//            super.onPause();
+//            Toast.makeText(getActivity(),"group fragment onPause",Toast.LENGTH_SHORT).show();
+//        }
+//
+//        @Override
+//        public void onStop() {
+//            super.onStop();
+//            Toast.makeText(getActivity(),"group fragment onStop",Toast.LENGTH_SHORT).show();
+//        }
+//
+//        @Override
+//        public void onDestroyView() {
+//            super.onDestroyView();
+//            Toast.makeText(getActivity(),"group fragment onDestroyView",Toast.LENGTH_SHORT).show();
+//        }
+//
+//        @Override
+//        public void onDestroy() {
+//            super.onDestroy();
+//            Toast.makeText(getActivity(),"group fragment onDestroy",Toast.LENGTH_SHORT).show();
+//        }
+//
+//        @Override
+//        public void onDetach() {
+//            super.onDetach();
+//            Toast.makeText(getActivity(),"group fragment onDetach",Toast.LENGTH_SHORT).show();
+//        }
 
     }
 
@@ -579,11 +490,23 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
 
 
-    public class MainFriendsFragment extends Fragment {
+    public static class MainFriendsFragment extends Fragment {
+
+        private MainActivity mActivity;
 
         ListView listView2;
 
         public MainFriendsFragment() {
+        }
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof MainActivity)
+            {
+                mActivity = (MainActivity) activity;
+            }
+            super.onAttach(activity);
         }
 
         @Override
@@ -599,7 +522,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
                     HashMap<String, Object> friendMap = (HashMap<String, Object>) parent.getItemAtPosition(position);
 
-                    Intent i = new Intent(MainActivity.this, FriendActivity.class);
+                    Intent i = new Intent(mActivity, FriendActivity.class);
                     i.putExtra("friendMap", friendMap);
                     getActivity().startActivityForResult(i, 0);
 
@@ -619,10 +542,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
                 double sum = mgr.getTotalBalanceByFid(friend.fid);
 
                 String balanceInfo = "";
-                if (sum<0.001&&sum>-0.001){
+                if (sum< Constants.settledThreshold&&sum>-Constants.settledThreshold){
                     balanceInfo = "Settled Up";
                 }else{
-                    balanceInfo = "Total Balance $ "+df.format(sum);
+                    balanceInfo = "Total Balance $ " + mActivity.df.format(sum);
                 }
 
                 HashMap<String, Object> map = new HashMap<String, Object>();

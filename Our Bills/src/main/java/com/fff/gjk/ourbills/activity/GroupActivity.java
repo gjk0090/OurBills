@@ -31,6 +31,7 @@ import com.fff.gjk.ourbills.bean.Friend;
 import com.fff.gjk.ourbills.bean.Friend_Bill;
 import com.fff.gjk.ourbills.bean.Friend_Group;
 import com.fff.gjk.ourbills.R;
+import com.fff.gjk.ourbills.util.Constants;
 
 public class GroupActivity extends Activity implements ActionBar.TabListener {
 
@@ -71,9 +72,11 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
 
             groupId = Integer.valueOf(groupMap.get("gid").toString());
             groupName = groupMap.get("gname").toString();
-        }catch(Exception e) {}
+        }catch(Exception e) {
+            Toast.makeText(this,"Missing important data group id and group name from previous page.",Toast.LENGTH_SHORT).show();
+        }
 
-        setTitle(groupName.toUpperCase());
+        setTitle(groupName);
 
         // Set up the action bar.
         final ActionBar actionBar = getActionBar();
@@ -134,12 +137,15 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
 
         if (id == R.id.add_bill) {
             Intent i = new Intent(GroupActivity.this, AddBillActivity.class);
-            i.putExtra("groupId",groupId);
+            i.putExtra("fromGroupId",groupId);
             startActivityForResult(i, 0);
             return true;
         }
 
-        if (id == R.id.action_settings) {
+        if (id == R.id.edit_group) {
+            Intent i = new Intent(GroupActivity.this, EditGroupActivity.class);
+            i.putExtra("fromGroupId",groupId);
+            startActivityForResult(i, 0);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -154,7 +160,7 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
 
                 groupId = Integer.valueOf(groupMap.get("gid").toString());
                 groupName = groupMap.get("gname").toString();
-                setTitle(groupName.toUpperCase());
+                setTitle(groupName);
 
                 //mSectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
                 //mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -269,11 +275,22 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
 
 
 
-    public class GroupBalanceFragment extends Fragment {
+    public static class GroupBalanceFragment extends Fragment {
 
+        private GroupActivity mActivity;
         ListView listView_Group_Balance;
 
         public GroupBalanceFragment() {
+        }
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof GroupActivity)
+            {
+                mActivity = (GroupActivity) activity;
+            }
+            super.onAttach(activity);
         }
 
         @Override
@@ -289,7 +306,7 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
 
                     HashMap<String, Object> friendMap = (HashMap<String, Object>) parent.getItemAtPosition(position);
 
-                    Intent i = new Intent(GroupActivity.this, FriendActivity.class);
+                    Intent i = new Intent(mActivity, FriendActivity.class);
                     i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); //http://www.eoeandroid.com/thread-205458-1-1.html
                     i.putExtra("friendMap", friendMap);
                     getActivity().startActivity(i);
@@ -303,7 +320,7 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
 
         public void showFriendAndBalance(View view) {
 
-            List<Friend_Group> fgs = MainActivity.mgr.getFriend_GroupByGroupId(groupId);
+            List<Friend_Group> fgs = MainActivity.mgr.getFriend_GroupByGroupId(mActivity.groupId);
 
             ArrayList<Map<String, Object>> fglist = new ArrayList<Map<String, Object>>();
 
@@ -312,10 +329,10 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
                 Friend friend =  MainActivity.mgr.getFriendById(fg.fid);
 
                 String balanceInfo = "";
-                if (fg.balance<0.001&&fg.balance>-0.001){
+                if (fg.balance<Constants.settledThreshold&&fg.balance>-Constants.settledThreshold){
                     balanceInfo = "Settled Up";
                 }else{
-                    balanceInfo = "Balance $ "+df.format(fg.balance);
+                    balanceInfo = "Balance $ " + mActivity.df.format(fg.balance);
                 }
 
                 HashMap<String, Object> map = new HashMap<String, Object>();
@@ -358,11 +375,23 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
 
 
 
-    public class GroupBillsFragment extends Fragment {
+    public static class GroupBillsFragment extends Fragment {
+
+        private GroupActivity mActivity;
 
         ListView listView_Group_Bills;
 
         public GroupBillsFragment() {
+        }
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof GroupActivity)
+            {
+                mActivity = (GroupActivity) activity;
+            }
+            super.onAttach(activity);
         }
 
         @Override
@@ -387,7 +416,7 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
 
         public void showBillsInGroup(View view) {
 
-            List<Bill> bills = MainActivity.mgr.getBillsByGroupId(groupId);
+            List<Bill> bills = MainActivity.mgr.getBillsByGroupId(mActivity.groupId);
 
             ArrayList<Map<String, Object>> billlist = new ArrayList<Map<String, Object>>();
 
@@ -399,8 +428,8 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
                 int oweCount=0;
 
                 for(Friend_Bill fb : fbs){
-                    if (fb.pay>0.001){payer += MainActivity.mgr.getFriendById(fb.fid).fname+" ";}
-                    if (fb.owe>0.001){oweCount += 1;}
+                    if (fb.pay>Constants.settledThreshold){payer += MainActivity.mgr.getFriendById(fb.fid).fname+" ";}
+                    if (fb.owe>Constants.settledThreshold){oweCount += 1;}
                 }
 
                 HashMap<String, Object> map = new HashMap<String, Object>();
@@ -408,7 +437,7 @@ public class GroupActivity extends Activity implements ActionBar.TabListener {
                 map.put("img", R.drawable.bill);
                 map.put("title", bill.title);
                 map.put("splitinfo", "paid by "+payer+"  split by "+oweCount);
-                map.put("amount", "$ "+bill.amount);
+                map.put("amount", "$ "+mActivity.df.format(bill.amount));
                 map.put("date", bill.date);
                 billlist.add(map);
             }

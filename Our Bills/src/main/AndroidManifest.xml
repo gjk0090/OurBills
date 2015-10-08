@@ -71,6 +71,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.fff.gjk.ourbills.activity.MainActivity" />
         </activity>
+        <activity
+            android:name="com.fff.gjk.ourbills.activity.EditGroupActivity"
+            android:label="@string/title_activity_edit_group" >
+        </activity>
     </application>
 
 </manifest>

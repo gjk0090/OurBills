@@ -1,6 +1,7 @@
 package com.fff.gjk.ourbills.activity;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 
 import com.fff.gjk.ourbills.R;
 import com.fff.gjk.ourbills.bean.Friend;
+import com.fff.gjk.ourbills.bean.Group;
 
 import java.util.*;
 
@@ -63,9 +65,50 @@ public class AddGroupActivity extends Activity {
         addGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //validate name
                 String gname = gnameEdit.getText().toString();
+                if(gname == null || gname.isEmpty()){
+                    Toast.makeText(getApplicationContext(), "Please enter group name.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(MainActivity.mgr.getGidByGname(gname)!=-1){
+                    Toast.makeText(getApplicationContext(),"Group already exist!",Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                //validate friends number
+                List<Integer> fids = new ArrayList<Integer>();
+                for(int i=0; i<checkBoxs.size(); i++){
+                    if(checkBoxs.get(i).isChecked()){
+                        fids.add(MainActivity.mgr.getFidByFname(checkBoxs.get(i).getText().toString()));
+                    }
+                }
+                if(fids.size() == 0){
+                    Toast.makeText(getApplicationContext(), "Please select at least one friend.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                //get category id
                 int gcid = MainActivity.mgr.getGcidByGcname(gcategorySpinner.getSelectedItem().toString());
-                //Toast.makeText(AddGroupActivity.this,gname+gcid,Toast.LENGTH_SHORT).show();
+
+                //insert group
+                int gid = MainActivity.mgr.addGroup(new Group(gname, gcid));
+                if(gid == -1){
+                    Toast.makeText(AddGroupActivity.this, "Create group failed for unknown reason.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                //insert friends
+                for(int fid : fids){
+                    MainActivity.mgr.addFriendToGroup(fid, gid);
+                }
+
+                Toast.makeText(getApplicationContext(), "Add group "+gname+" success!", Toast.LENGTH_SHORT).show();
+
+
+                Intent i = new Intent();
+                AddGroupActivity.this.setResult(RESULT_OK, i);
+                AddGroupActivity.this.finish();
             }
         });
 
@@ -75,7 +118,7 @@ public class AddGroupActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.add_group, menu);
+        //getMenuInflater().inflate(R.menu.add_group, menu);
         return true;
     }
 

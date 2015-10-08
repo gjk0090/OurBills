@@ -40,15 +40,21 @@ public class AddFriendActivity extends Activity {
             @Override
             public void onClick(View v) {
 
-                int ok = 0;
+                boolean ok = false;
 
                 String name = editName.getText().toString();
-                if(MainActivity.mgr.getFidByFname(name)==-1){ok++;};
+                if(name == null || name.isEmpty()){
+                    Toast.makeText(getApplicationContext(), "Please enter friend name.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(MainActivity.mgr.getFidByFname(name)==-1){ok = true;}
 
                 String email = editEmail.getText().toString();
 
-                if(ok==1) {
+                if(ok) {
                     MainActivity.mgr.addFriend(new Friend(name, gender, email));
+                    Toast.makeText(getApplicationContext(), "Add friend "+name+" success!", Toast.LENGTH_SHORT).show();
+
                     Intent i = new Intent();
                     AddFriendActivity.this.setResult(RESULT_OK, i);
                     AddFriendActivity.this.finish();

@@ -2,10 +2,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.fff.gjk.ourbills.activity.MainActivity" >
     
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
-        android:orderInCategory="100"
-        android:showAsAction="never" />
+    <!--<item android:id="@+id/action_settings"-->
+        <!--android:title="@string/action_settings"-->
+        <!--android:orderInCategory="100"-->
+        <!--android:showAsAction="never" />-->
     <item android:id="@+id/add_bill"
         android:title="+$"
         android:orderInCategory="97"
@@ -20,12 +20,12 @@
         android:title="++"
         android:orderInCategory="99"
         android:showAsAction="always" />
-    <item android:id="@+id/add_DB"
-        android:title="add DB"
-        android:orderInCategory="101"
-        android:showAsAction="never" />
+    <!--<item android:id="@+id/add_DB"-->
+        <!--android:title="add DB"-->
+        <!--android:orderInCategory="101"-->
+        <!--android:showAsAction="never" />-->
     <item android:id="@+id/clear_DB"
-        android:title="clean DB"
+        android:title="Clear All Data"
         android:orderInCategory="102"
         android:showAsAction="never" />
 </menu>

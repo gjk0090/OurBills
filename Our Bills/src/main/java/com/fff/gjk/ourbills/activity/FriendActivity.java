@@ -36,6 +36,7 @@ import com.fff.gjk.ourbills.bean.Friend_Bill;
 import com.fff.gjk.ourbills.bean.Friend_Group;
 import com.fff.gjk.ourbills.bean.Group;
 import com.fff.gjk.ourbills.R;
+import com.fff.gjk.ourbills.util.Constants;
 
 public class FriendActivity extends Activity implements ActionBar.TabListener {
 
@@ -74,7 +75,7 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
 
         friendId = Integer.valueOf(friendMap.get("fid").toString());
         friendName = friendMap.get("fname").toString();
-        setTitle(friendName.toUpperCase());
+        setTitle(friendName);
 
         // Set up the action bar.
         final ActionBar actionBar = getActionBar();
@@ -128,7 +129,7 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
             case RESULT_OK:
 
                 friendName = MainActivity.mgr.getFriendById(friendId).fname;
-                setTitle(friendName.toUpperCase());
+                setTitle(friendName);
 
                 getActionBar().removeAllTabs();
                 for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
@@ -167,7 +168,7 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
 
         if (id == R.id.edit_friend_button) {
             Intent i = new Intent(FriendActivity.this, EditFriendActivity.class);
-            i.putExtra("fid",friendId);
+            i.putExtra("fid", friendId);
             startActivityForResult(i, 0);
         }
 
@@ -201,7 +202,7 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    private class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -262,11 +263,23 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
 
 
 
-    public class FriendBalanceFragment extends Fragment {
+    public static class FriendBalanceFragment extends Fragment {
 
-        ListView listView_Friend_Balance;
+        private FriendActivity mActivity;
+
+        private ListView listView_Friend_Balance;
 
         public FriendBalanceFragment(){}
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof FriendActivity)
+            {
+                mActivity = (FriendActivity) activity;
+            }
+            super.onAttach(activity);
+        }
 
         public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState){
 
@@ -276,13 +289,13 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
 
             showGroupAndBalance(view);
 
-            listView_Friend_Balance.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            listView_Friend_Balance.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
                     HashMap<String, Object> groupMap = (HashMap<String, Object>) parent.getItemAtPosition(position);
 
-                    Intent i = new Intent(FriendActivity.this, GroupActivity.class);
+                    Intent i = new Intent(mActivity, GroupActivity.class);
                     i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); //http://www.eoeandroid.com/thread-205458-1-1.html
                     i.putExtra("groupMap", groupMap);
                     getActivity().startActivity(i);
@@ -296,7 +309,7 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
 
         public void showGroupAndBalance(View view) {
 
-            List<Friend_Group> fgs = MainActivity.mgr.getFriend_GroupByFriendId(friendId);
+            List<Friend_Group> fgs = MainActivity.mgr.getFriend_GroupByFriendId(mActivity.friendId);
 
             ArrayList<Map<String, Object>> fglist = new ArrayList<Map<String, Object>>();
 
@@ -305,10 +318,10 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
                 Group group =  MainActivity.mgr.getGroupById(fg.gid);
 
                 String balanceInfo = "";
-                if (fg.balance<0.001&&fg.balance>-0.001){
+                if (fg.balance<Constants.settledThreshold&&fg.balance>-Constants.settledThreshold){
                     balanceInfo = "Settled Up";
                 }else{
-                    balanceInfo = "Balance $ "+df.format(fg.balance);
+                    balanceInfo = "Balance $ " + mActivity.df.format(fg.balance);
                 }
 
                 HashMap<String, Object> map = new HashMap<String, Object>();
@@ -352,11 +365,21 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
 
 
 
-    public class FriendBillsFragment extends Fragment {
+    public static class FriendBillsFragment extends Fragment {
 
+        private FriendActivity mActivity;
+        private ListView listView_Friend_Bills;
+        private ExpandableListView ex_listView_Friend_Bills;
 
-        ListView listView_Friend_Bills;
-        ExpandableListView ex_listView_Friend_Bills;
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof FriendActivity)
+            {
+                mActivity = (FriendActivity) activity;
+            }
+            super.onAttach(activity);
+        }
 
         List<Map<String, String >> group=new ArrayList<Map<String,String>>();
         List<List<Map<String , Object >>> child=new ArrayList<List<Map<String,Object>>>();
@@ -368,13 +391,10 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
             View view = inflater.inflate(R.layout.fragment_friend_bills, container, false);
             listView_Friend_Bills = (ListView) view.findViewById(R.id.listView_friend_bills);
 
-            ArrayList<Map<String, Object>> data = prepareData();//"data" is not used
-
-            //MyAdapter adapter=new MyAdapter(data); //for another list
-            //listView_Friend_Bills.setAdapter(adapter); //for another list
+            prepareData();
 
             ex_listView_Friend_Bills = (ExpandableListView) view.findViewById(R.id.ex_listView_friend_bills);
-            myExAdapter myAdapter=new myExAdapter(getActivity(),group,child);
+            myExAdapter myAdapter=new myExAdapter(mActivity,group,child);
             ex_listView_Friend_Bills.setAdapter(myAdapter);
 
             return view;
@@ -390,17 +410,17 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
 
         }
 
-        public ArrayList<Map<String, Object>> prepareData(){
+        public void prepareData(){
 
-            List<Friend_Bill> fbs = MainActivity.mgr.getFriend_BillByFid(friendId);
+            List<Friend_Bill> fbs = MainActivity.mgr.getFriend_BillByFid(mActivity.friendId);
 
             ArrayList<Map<String, Object>> rawData = new ArrayList<Map<String, Object>>();
 
             for(Friend_Bill fb : fbs){
                 String info = "";
-                if (fb.pay>0.001){info = "You paid $ "+fb.pay;}
-                if (fb.owe>0.001){info = "You owed $ "+fb.owe;}
-                //if (fb.pay>0.001&&fb.owe>0.001){info = "You paid $ "+fb.pay+" & owed $ "+fb.owe;}
+                if (fb.pay>Constants.settledThreshold){info = "You paid $ "+mActivity.df.format(fb.pay);}
+                if (fb.owe>Constants.settledThreshold){info = "You owed $ "+mActivity.df.format(fb.owe);}
+                //if (fb.pay>Constants.settledThreshold&&fb.owe>Constants.settledThreshold){info = "You paid $ "+fb.pay+" & owed $ "+fb.owe;}
 
                 Bill bill = MainActivity.mgr.getBillById(fb.bid);
                 HashMap<String, Object> map = new HashMap<String, Object>();
@@ -410,32 +430,18 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
                 map.put("img", R.drawable.bill);
                 map.put("title", bill.title);
                 map.put("info", info);
-                map.put("amount", "$ "+bill.amount);
+                map.put("amount", "$ "+mActivity.df.format(bill.amount));
                 map.put("date", bill.date);
                 rawData.add(map);
             }
 
-            List<Friend_Group> fgs = MainActivity.mgr.getFriend_GroupByFriendId(friendId);
+            List<Friend_Group> fgs = MainActivity.mgr.getFriend_GroupByFriendId(mActivity.friendId);
             ArrayList<Integer> groupId = new ArrayList<Integer>();
             for (Friend_Group fg : fgs){groupId.add(fg.gid);}
 
             ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
 
-            /*
-            //prepare "data" list, not used
-            for (int gid : groupId){
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("isTitle",true);
-                map.put("title",MainActivity.mgr.getGroupById(gid).gname);
-                data.add(map);
 
-                for (Map<String, Object> map2 : rawData){
-                    if (gid == map2.get("gid")){
-                        data.add(map2);
-                    }
-                }
-            }
-            */
 
             for (int gid : groupId) {
                 Map<String , String > map=new HashMap<String, String>();
@@ -451,100 +457,18 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
                 child.add(childData);
             }
 
-            return data;//not used
         }
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    private class MyAdapter extends BaseAdapter {
-
-        ArrayList<Map<String, Object>> data;
-
-        public MyAdapter(ArrayList<Map<String, Object>> data){
-            this.data = data;
-        }
-
-        @Override
-        public int getCount() {
-            // TODO Auto-generated method stub
-            return data.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            // TODO Auto-generated method stub
-            return data.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            // TODO Auto-generated method stub
-            return position;
-        }
-        @Override
-        public boolean isEnabled(int position) {
-            // TODO Auto-generated method stub
-            HashMap<String, Object> map = (HashMap<String, Object>)getItem(position);
-            if(true == (boolean)map.get("isTitle")){
-                return false;
-            }
-            return super.isEnabled(position);
-        }
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            // TODO Auto-generated method stub
-            View view=convertView;
-
-            HashMap<String, Object> map = (HashMap<String, Object>)getItem(position);
-
-            if(true == (boolean)map.get("isTitle")){
-                view=LayoutInflater.from(getApplicationContext()).inflate(R.layout.list_tag, null);
-                TextView text=(TextView) view.findViewById(R.id.text1);
-                text.setText((CharSequence) map.get("title"));
-
-            }else{
-                view=LayoutInflater.from(getApplicationContext()).inflate(R.layout.list_item_with_pic, null);
-                TextView text1=(TextView) view.findViewById(android.R.id.text1);
-                TextView text2=(TextView) view.findViewById(android.R.id.text2);
-                TextView text3=(TextView) view.findViewById(R.id.text3);
-                TextView text4=(TextView) view.findViewById(R.id.text4);
-                ImageView img =(ImageView) view.findViewById(R.id.img);
-
-                text1.setText(map.get("title").toString());
-                text2.setText(map.get("info").toString());
-                text3.setText(map.get("amount").toString());
-                text4.setText(map.get("date").toString());
-                img.setImageResource((Integer) map.get("img"));
-            }
-
-            return view;
-        }
-
-    }
-
-
-    class myExAdapter extends BaseExpandableListAdapter {
-        LayoutInflater inflater;
-        List<Map<String, String >> group=new ArrayList<Map<String,String>>();
-        List<List<Map<String , Object >>> child=new ArrayList<List<Map<String,Object>>>();
+    private static class myExAdapter extends BaseExpandableListAdapter {
+        private Context context;
+        private LayoutInflater inflater;
+        private List<Map<String, String >> group=new ArrayList<Map<String,String>>();
+        private List<List<Map<String , Object >>> child=new ArrayList<List<Map<String,Object>>>();
 
         public myExAdapter(Context context, List<Map<String, String >> group, List<List<Map<String , Object >>> child) {
+            this.context = context;
             this.child = child;
             this.group = group;
         }
@@ -564,7 +488,7 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
         public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
             // TODO Auto-generated method stub
             if(convertView==null){
-                inflater=(LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                inflater=(LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView=inflater.inflate(R.layout.list_item_with_pic, null);
 
                 TextView text1=(TextView) convertView.findViewById(android.R.id.text1);
@@ -605,10 +529,10 @@ public class FriendActivity extends Activity implements ActionBar.TabListener {
         public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
             // TODO Auto-generated method stub
             if(convertView==null){
-                inflater=(LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                inflater=(LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView=inflater.inflate(R.layout.list_tag, null);
                 TextView group_tv=(TextView) convertView.findViewById(R.id.text2);
-                group_tv.setText(group.get(groupPosition).get("title"));
+                group_tv.setText(group.get(groupPosition).get("title")+" ("+getChildrenCount(groupPosition)+")");
             }
             return convertView;
         }
